@@ -1,19 +1,19 @@
 const HOOK_LAST = {order: 100, filter: {fake: null}}
 
-module.exports = function ItemCache(dispatch) {
+module.exports = function ItemCache(mod) {
 	let gameId = null,
 		lock = false,
 		inven = null,
 		invenNew = null,
 		ware = {}
 
-	dispatch.hook('S_LOGIN', mod.patchVersion < 81 ? 12 : 13, event => {
+	mod.hook('S_LOGIN', mod.patchVersion < 81 ? 12 : 13, event => {
 		({gameId} = event)
 		inven = invenNew = null
 		delete ware[9] // Pet bank
 	})
 
-	dispatch.hook('S_INVEN', 'raw', HOOK_LAST, (code, data) => {
+	mod.hook('S_INVEN', 'raw', HOOK_LAST, (code, data) => {
 		if(lock) return
 
 		if(data[25]) invenNew = [] // Check first flag
@@ -28,15 +28,15 @@ module.exports = function ItemCache(dispatch) {
 		}
 	})
 
-	dispatch.hook('C_SHOW_INVEN', 1, HOOK_LAST, event => {
+	mod.hook('C_SHOW_INVEN', 1, HOOK_LAST, event => {
 		if(event.unk !== 1) return // Type?
 
 		lock = true
-		for(let data of inven) dispatch.toClient(data)
+		for(let data of inven) mod.toClient(data)
 		return lock = false
 	})
 
-	dispatch.hook('S_VIEW_WARE_EX', 'raw', HOOK_LAST, (code, data) => {
+	mod.hook('S_VIEW_WARE_EX', 'raw', HOOK_LAST, (code, data) => {
 		if(lock) return
 
 		const event = {
@@ -60,14 +60,14 @@ module.exports = function ItemCache(dispatch) {
 		wareType[event.offset] = Buffer.from(data)
 	})
 
-	dispatch.hook('C_VIEW_WARE', 2, HOOK_LAST, event => {
+	mod.hook('C_VIEW_WARE', 2, HOOK_LAST, event => {
 		if(event.gameId !== gameId) return
 
 		const wareType = ware[event.type]
 
 		if(wareType && wareType[event.offset]) {
 			lock = true
-			dispatch.toClient(wareType[event.offset]) // Pre-send the requested page
+			mod.toClient(wareType[event.offset]) // Pre-send the requested page
 			lock = false
 		}
 	})
