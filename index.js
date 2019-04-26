@@ -7,7 +7,7 @@ module.exports = function ItemCache(dispatch) {
 		invenNew = null,
 		ware = {}
 
-	dispatch.hook('S_LOGIN', 12, event => {
+	dispatch.hook('S_LOGIN', mod.patchVersion < 81 ? 12 : 13, event => {
 		({gameId} = event)
 		inven = invenNew = null
 		delete ware[9] // Pet bank
